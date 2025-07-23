@@ -38,15 +38,7 @@ else{
     }
 }
 
-if(substr($_GET['page'], 0, 1) == '/' ||
-    substr($_GET['page'], 0, 1) == '\\'){
-    $pageToLoad = substr($_GET['page'], 1);
-}
-else{
-    $pageToLoad = $_GET['page'];
-}
-
-$pageContent = file_get_contents($pageToLoad);
+$pageContent = file_get_contents(pageToFile($page));
 $pageContent = makeEditable($pageContent, $page);
 echo $pageContent;
 
@@ -93,7 +85,7 @@ function addAlienInLinks(string $content): string{
 }
 
 function editPart(){
-    $pageContent = file_get_contents($_POST['page']);
+    $pageContent = file_get_contents(pageToFile($_POST['page']));
     $formInputCount = 1;
     $positions = 0;
     $lastPos = 0;
@@ -118,7 +110,7 @@ function editPart(){
     $page = $bengiPage.EDITABLE.$_POST['formInputContent'].$endPage;
 
     //echo $page;exit();
-    file_put_contents($_POST['page'], $page);
+    file_put_contents(pageToFile($_POST['page']), $page);
 }
 
 class View{
@@ -136,4 +128,15 @@ class View{
             &nbsp;&nbsp;<a href="'.$page.'">View</a>
             </form>');
     }
+}
+
+function pageToFile($page){
+    if(substr($page, 0, 1) == '/' ||
+        substr($page, 0, 1) == '\\'){
+        $fileToOpen = substr($page, 1);
+    }
+    else{
+        $fileToOpen = $page;
+    }
+    return($fileToOpen);
 }
