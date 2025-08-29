@@ -9,7 +9,7 @@ PHP
 
 # Usage
 
-Upload alien.php in the root directory of your static website.
+Upload geppetto.php in the root directory of your static website.
 
 go to https://www.exemple.com/geppetto.php?page=pagename.html.
 
