@@ -1,25 +1,81 @@
 <?php
-define ('EDITABLE', '<!--EDITABLE-->');
-define ('END_EDITABLE', '<!--END EDITABLE-->');
-define ('BASE_URL', dirname($_SERVER['PHP_SELF']));
+session_start();
+//define ('EDITABLE', '<!--EDITABLE-->');
+//define ('END_EDITABLE', '<!--END EDITABLE-->');
+define ('BASE_URL', $_SERVER['HTTP_HOST']);
+define ('URL_SCHEME', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http");
+
 define ('THIS_FILE', pathinfo($_SERVER['PHP_SELF'], PATHINFO_BASENAME));
+
 if(isset($_GET['page']))
     define ('CURENT_PATH', pathinfo($_GET['page'], PATHINFO_BASENAME));
 else
     define ('CURENT_PATH', '');
 
-// Check login
-/*
-if(!isset($_SESSION['user']['name'])){
+include('User.php');
+include('View.php');
 
+
+
+// Check login
+//----------------------------------------------------------------------------------------------------------------------
+if(!isset($_SESSION['user']['name'])){
+    if(isset($_POST['login'])) $login = strip_tags($_POST['login']); else $login = '';
+    if(isset($_POST['password'])) $password = $_POST['password']; else $password = '';
+
+    $user = new User();
+    $message ='';
+    if(isset($_POST['submit'])){
+        if($user->login($login, $password)){
+            $_SESSION['user']['name'] = $login;
+        }
+        else{
+            $message['type'] = 'danger';
+            $message['text'] = 'Login or password is incorrect';
+        }
+
+    }
+    elseif(isset($_POST['create'])){
+        if( isset($_POST['password2']) &&
+            $_POST['password2'] != '' &&
+            isset($password) &&
+            $password != '' &&
+            isset($login) &&
+            $login != '' &&
+            $_POST['password2'] == $password) {
+            $user->add($login, $password);
+
+            if ($user->add($login, $password)) {
+                $_SESSION['user']['name'] = $login;
+            } else {
+                $message['type'] = 'danger';
+                $message['text'] = 'Login or password is incorrect';
+            }
+        }
+        else{
+            $message['type'] = 'danger';
+            $message['text'] = 'Login missing or password do not match';
+        }
+    }
+
+    if(count($user->users)){
+        echo View::login($login, $message);
+    }
+    else{
+        echo View::newUser($login, $message);
+    }
+
+    exit();
 }
-*/
+
 // Post
+//----------------------------------------------------------------------------------------------------------------------
 if(isset($_POST['page'])){
     editPart();
 }
 
 // Open page
+//----------------------------------------------------------------------------------------------------------------------
 if(isset($_GET['page'])){
     $page = $_GET['page'];
 }
@@ -37,6 +93,8 @@ else{
         // ask user to select the main file
     }
 }
+
+//echo BASE_URL.$page;
 
 $pageContent = file_get_contents(pageToFile($page));
 $pageContent = makeEditable($pageContent, $page);
@@ -113,22 +171,6 @@ function editPart(){
     file_put_contents(pageToFile($_POST['page']), $page);
 }
 
-class View{
-    static function topEditForm(&$page, &$counter){
-        return('<form action="/alien.php?page='.$page.'" method="post" style="width: 100%;">
-                        <input type="hidden" name="page" value="'.$page.'" />
-                        <input type="hidden" name="formInputCount" value="'.$counter++.'" />
-                        <textarea name="formInputContent" rows="10" style="background-color:#d6ffce; width: 100%;">');
-    }
-
-    static function bottomEditForm($page){
-        return('</textarea>
-            <br>
-            <input type="submit" value="Save">
-            &nbsp;&nbsp;<a href="'.$page.'">View</a>
-            </form>');
-    }
-}
 
 function pageToFile($page){
     if(substr($page, 0, 1) == '/' ||
@@ -140,3 +182,6 @@ function pageToFile($page){
     }
     return($fileToOpen);
 }
+
+
+
