@@ -12,8 +12,9 @@ if(isset($_GET['page']))
 else
     define ('CURENT_PATH', '');
 
-include('User.php');
-include('View.php');
+include('geppetto/User.php');
+include('geppetto/View.php');
+include('geppetto/config.php');
 
 
 
@@ -24,7 +25,7 @@ if(!isset($_SESSION['user']['name'])){
     if(isset($_POST['password'])) $password = $_POST['password']; else $password = '';
 
     $user = new User();
-    $message ='';
+    $message = array();
     if(isset($_POST['submit'])){
         if($user->login($login, $password)){
             $_SESSION['user']['name'] = $login;
@@ -98,21 +99,27 @@ else{
 
 $pageContent = file_get_contents(pageToFile($page));
 $pageContent = makeEditable($pageContent, $page);
+
+$script = '<script>'.file_get_contents('geppetto.js').'</script>';
+$pageContent = str_replace('</body>',$script.'</body>', $pageContent);
 echo $pageContent;
 
-
 function makeEditable($content, $page){
-    $counter = 1;
-
+    $counter = 0;
+    $editForm = '<form method="post" action="geppetto.php">'."\n";
+    $editForm .= '<input type="hidden" name="page" value="'.$page.'">'."\n";
     $content = preg_replace_callback(
-        '/'.EDITABLE.'/',
-        function ($matches) use (&$counter, &$page) {
-            return View::topEditForm($page, $counter);
+        pattern: '/editable/',
+        callback: function ($matches) use (&$counter, &$editForm) {
+            $counter++;
+            $editForm .= '<input type="hidden" name="edit_field_geppetto_'.$counter.'" id="edit_field_geppetto_'.$counter.'" value="">'."\n";
+            return 'id="geppetto_'.$counter.'" contenteditable';
         },
-        $content
+        subject: $content
     );
-
-    $content = str_replace(END_EDITABLE, View::bottomEditForm($page), $content);
+    $editForm .= '<input type="submit" value="Save" style="position:fixed; width:100px; height:60px; bottom:40px; right:40px;">'."\n";
+    $editForm .= '</form>'."\n";
+    $content = str_replace('</body>',$editForm.'</body>', $content);
 
     $content = addAlienInLinks($content);
     return($content);
@@ -143,32 +150,25 @@ function addAlienInLinks(string $content): string{
 }
 
 function editPart(){
-    $pageContent = file_get_contents(pageToFile($_POST['page']));
-    $formInputCount = 1;
-    $positions = 0;
-    $lastPos = 0;
+    $doc = new DOMDocument();
+    libxml_use_internal_errors(true);
+    $doc->loadHTMLFile($_POST['page']);
 
-    // Find xeme text
-    while (($lastPos = strpos($pageContent, EDITABLE, $lastPos))!== false) {
-        $positions = $lastPos;
-        $lastPos = $lastPos + strlen(EDITABLE);
-        if($formInputCount == $_POST['formInputCount']){
-            break;
+    $xpath = new DOMXPath($doc);
+    $nodes = $xpath->query('//*[@editable="true"]');
+
+    $index = 1;
+    foreach ($nodes as $node) {
+        echo $index.' ';
+        echo $_POST['edit_field_geppetto_'.$index].' <br>';
+        if($_POST['edit_field_geppetto_'.$index] != ""){
+            $node->nodeValue = $_POST['edit_field_geppetto_'.$index];
         }
-        $formInputCount++;
+        $index++;
     }
 
-    $bengiPage = substr($pageContent, 0, $positions);
-
-    $endPage = substr($pageContent, strpos($pageContent, END_EDITABLE, $positions));
-
-    $_POST['formInputContent'] = str_replace(EDITABLE, '', $_POST['formInputContent']);
-    $_POST['formInputContent'] = str_replace(END_EDITABLE, '', $_POST['formInputContent']);
-
-    $page = $bengiPage.EDITABLE.$_POST['formInputContent'].$endPage;
-
-    //echo $page;exit();
-    file_put_contents(pageToFile($_POST['page']), $page);
+// Enregistre le fichier modifié
+    $doc->saveHTMLFile($_POST['page']);
 }
 
 

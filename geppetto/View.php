@@ -69,23 +69,6 @@ class View{
         ');
     }
 
-    static function topEditForm(&$page, &$counter){
-        return('<form action="/alien.php?page='.$page.'" method="post" style="width: 100%;">
-                        <input type="hidden" name="page" value="'.$page.'" />
-                        <input type="hidden" name="formInputCount" value="'.$counter++.'" />
-                        <textarea name="formInputContent" rows="10" style="background-color:#d6ffce; width: 100%;">');
-    }
-
-    static function bottomEditForm($page){
-        return('</textarea>
-            <br>
-            '.URL_SCHEME.'://'.BASE_URL.$page.'
-            <input type="submit" value="Save"> hgjgh
-            
-            </form>
-            &nbsp;&nbsp;<a href="'.URL_SCHEME.'://'.BASE_URL.'">View</a>
-            ');
-    }
 
     static function login($login='', $message = array()){
 
@@ -101,7 +84,7 @@ class View{
           <div class="container">
             <div class="item">'.
             $htmlMessage.'
-            <form action="/alien.php" method="post">
+            <form action="/geppetto/index.php" method="post">
               <p>
                 <label for="login">Login:</label>
                 </p>
@@ -139,7 +122,7 @@ class View{
           <div class="container">
             <div class="item">
 
-            <form action="/alien.php" method="post">
+            <form action="/geppetto/index.php" method="post">
             <h2>New user</h2>
             <p>There is no user registered, please create a user</p>
             '.$htmlMessage.'

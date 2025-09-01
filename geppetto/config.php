@@ -1,4 +1,4 @@
 <?php
 $users = [
-'Eddy' => '$2y$10$ANA5QPf6nMEl1Pcoao.gG.WKi3I0N5AIfJm0RE6UXqoSAqBJad1Ba',
+'Eddy' => '$2y$10$ZF7bO37XEIIvTnXsXQB.K.bcD.9xOuuWn0MxctEDE3Zb3cGH2h3B2',
 ];
