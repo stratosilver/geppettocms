@@ -10,7 +10,7 @@ PHP
 
 Upload `geppetto.php` and  `/geppetto` directory in the root directory of your static website.
 
-go to `https://www.exemple.com/geppetto.php`
+go to `https://www.yourwebsite.com/geppetto.php`
 
 ## Create an account
 
@@ -21,7 +21,7 @@ The login page will show.
 
 After the login, it will search for the default page (index.html, index.html, or index.php) it will open the page in edition mode 
 
-If you have a specific default page indicate it as a parameter of the url `https://www.exemple.com/geppetto.php?page=pagename.html`
+If you have a specific default page indicate it as a parameter of the url `https://www.yourwebsite.com/geppetto.php?page=pagename.html`
 
 In the edition mode and any HTML element with the attribute __editable="true"__ will become editable. To change the text simply click on it and edit it 
 When you click on the save button which is floating on the bottom right of the page, the page will be updated with the change you made.
