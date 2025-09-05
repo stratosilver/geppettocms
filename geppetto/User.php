@@ -13,17 +13,21 @@ class User
 
     function __construct()
     {
-        if (file_exists('config.php')) {
+        if (file_exists('geppetto/config.php')) {
             try {
-                include('config.php');
+                include('geppetto/config.php');
                 if (isset($users) && is_array($users)) {
                     $this->users = $users;
                 }
             } catch (Exception $e) {
                 $this->message = 'Config file error';
-                unlink('config.php');
+                unlink('geppetto/config.php');
             }
         }
+    }
+
+    function logoff(){
+        $_SESSION['user'] = array();
     }
 
     function login($login, $password): bool
@@ -43,7 +47,7 @@ class User
 
     private function save(): bool
     {
-        $confFile = fopen('config.php', 'w');
+        $confFile = fopen('geppetto/config.php', 'w');
         fputs($confFile, "<?php\n");
         fputs($confFile, "\$users = [\n");
         foreach ($this->users as $user => $hash) {

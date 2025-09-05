@@ -84,7 +84,7 @@ class View{
           <div class="container">
             <div class="item">'.
             $htmlMessage.'
-            <form action="/geppetto/index.php" method="post">
+            <form action="/geppetto.php" method="post">
               <p>
                 <label for="login">Login:</label>
                 </p>
@@ -122,7 +122,7 @@ class View{
           <div class="container">
             <div class="item">
 
-            <form action="/geppetto/index.php" method="post">
+            <form action="/geppetto.php" method="post">
             <h2>New user</h2>
             <p>There is no user registered, please create a user</p>
             '.$htmlMessage.'

@@ -1,21 +1,12 @@
 <?php
 session_start();
-//define ('EDITABLE', '<!--EDITABLE-->');
-//define ('END_EDITABLE', '<!--END EDITABLE-->');
-define ('BASE_URL', $_SERVER['HTTP_HOST']);
-define ('URL_SCHEME', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http");
-
-define ('THIS_FILE', pathinfo($_SERVER['PHP_SELF'], PATHINFO_BASENAME));
-
-if(isset($_GET['page']))
-    define ('CURENT_PATH', pathinfo($_GET['page'], PATHINFO_BASENAME));
-else
-    define ('CURENT_PATH', '');
 
 include('geppetto/User.php');
 include('geppetto/View.php');
-include('geppetto/config.php');
 
+define ('BASE_URL_GEPPETTO', $_SERVER['HTTP_HOST']);
+define ('URL_SCHEME', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http");
+define ('THIS_FILE', pathinfo($_SERVER['PHP_SELF'], PATHINFO_BASENAME));
 
 
 // Check login
@@ -68,18 +59,20 @@ if(!isset($_SESSION['user']['name'])){
 
     exit();
 }
-
-// Post
-//----------------------------------------------------------------------------------------------------------------------
-if(isset($_POST['page'])){
-    editPart();
+elseif(isset($_GET['logoff'])){
+    $user = new User();
+    $user->logoff();
 }
 
-// Open page
-//----------------------------------------------------------------------------------------------------------------------
-if(isset($_GET['page'])){
-    $page = $_GET['page'];
+
+
+// Which page to edit
+if(isset($_GET['page']) && $_GET['page'] != '' && $_GET['page'] != '/'){
+    // Security, remove leading / or ..
+    $page = ltrim($_GET['page'], './\\');
+    define ('CURENT_PATH', pathinfo($_GET['page'], PATHINFO_BASENAME));
 }
+// Set default page to edit
 else{
     if(file_exists('index.html')){
         $page = 'index.html';
@@ -93,20 +86,34 @@ else{
     else{
         // ask user to select the main file
     }
+
+    define ('CURENT_PATH', '');
 }
+
+
+// Post
+//----------------------------------------------------------------------------------------------------------------------
+if(isset($_POST['page']) && $_POST['page'] != '' && $_POST['page'] != '/'){
+    editPart($page);
+}
+
+// Open page
+//----------------------------------------------------------------------------------------------------------------------
 
 //echo BASE_URL.$page;
 
-$pageContent = file_get_contents(pageToFile($page));
+$pageContent = file_get_contents($page);
 $pageContent = makeEditable($pageContent, $page);
 
-$script = '<script>'.file_get_contents('geppetto.js').'</script>';
+$script = '<script>'.file_get_contents('geppetto/geppetto.js').'</script>';
 $pageContent = str_replace('</body>',$script.'</body>', $pageContent);
 echo $pageContent;
 
+// End
+// ---------------------------------------------------------------------------------------------------------------------
 function makeEditable($content, $page){
     $counter = 0;
-    $editForm = '<form method="post" action="geppetto.php">'."\n";
+    $editForm = '<form method="post" action="geppetto.php?page='.$page.'">'."\n";
     $editForm .= '<input type="hidden" name="page" value="'.$page.'">'."\n";
     $content = preg_replace_callback(
         pattern: '/editable/',
@@ -121,20 +128,21 @@ function makeEditable($content, $page){
     $editForm .= '</form>'."\n";
     $content = str_replace('</body>',$editForm.'</body>', $content);
 
-    $content = addAlienInLinks($content);
+    $content = convertLinks($content);
     return($content);
 }
 
-function addAlienInLinks(string $content): string{
+function convertLinks(string $content): string{
     $dom = new DOMDocument;
-    @$dom->loadHTML($content);
+    @$dom->loadHTML($content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
     foreach ($dom->getElementsByTagName('a') as $node)
     {
         $link = $node->getAttribute("href");
         //echo $link.'<br>';
         $splitedLink = parse_url($link);
+        //var_dump($splitedLink);
         if(isset($splitedLink['path'])
-          && (substr($splitedLink['path'],0,1) == '/' || substr($splitedLink['path'],0,1) == '\\') ){
+            && (substr($splitedLink['path'],0,1) == '/' || substr($splitedLink['path'],0,1) == '\\') ){
             $link = '/'.THIS_FILE.'?page='.$splitedLink['path'];
         }
         elseif(isset($splitedLink['path'])){
@@ -149,39 +157,50 @@ function addAlienInLinks(string $content): string{
     return $dom->saveHTML();
 }
 
-function editPart(){
+function editPart($page){
+    $html = file_get_contents($page);
+    $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
     $doc = new DOMDocument();
     libxml_use_internal_errors(true);
-    $doc->loadHTMLFile($_POST['page']);
+    //$doc->loadHTMLFile($page, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+
+    $doc->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
 
     $xpath = new DOMXPath($doc);
     $nodes = $xpath->query('//*[@editable="true"]');
 
     $index = 1;
     foreach ($nodes as $node) {
-        echo $index.' ';
-        echo $_POST['edit_field_geppetto_'.$index].' <br>';
-        if($_POST['edit_field_geppetto_'.$index] != ""){
-            $node->nodeValue = $_POST['edit_field_geppetto_'.$index];
+        //echo $index.' ';
+        //echo $_POST['edit_field_geppetto_'.$index].' <br>';
+        if(isset($_POST['edit_field_geppetto_'.$index]) && $_POST['edit_field_geppetto_'.$index] != ""){
+            //echo $_POST['edit_field_geppetto_'.$index];
+            $htmlCode = strip_tags(nl2br($_POST['edit_field_geppetto_'.$index]), '<br>');
+
+            $tmpDoc = new DOMDocument();
+            @$tmpDoc->loadHTML('<?xml encoding="utf-8" ?><div>' . $htmlCode . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+
+
+            // 5. Importer les nœuds du document temporaire dans le document principal
+            $fragment = $doc->createDocumentFragment();
+            foreach ($tmpDoc->getElementsByTagName('div')->item(0)->childNodes as $tmpNode) {
+                $importedNode = $doc->importNode($tmpNode, true); // Importer le nœud avec ses enfants
+                $fragment->appendChild($importedNode);
+            }
+
+            // 6. Vider le contenu existant du nœud cible (optionnel, si vous voulez remplacer)
+            while ($node->hasChildNodes()) {
+                $node->removeChild($node->firstChild);
+            }
+
+            // 7. Ajouter le fragment au nœud cible
+            $node->appendChild($fragment);
+
         }
         $index++;
     }
 
 // Enregistre le fichier modifié
-    $doc->saveHTMLFile($_POST['page']);
+    $doc->saveHTMLFile($page);
 }
-
-
-function pageToFile($page){
-    if(substr($page, 0, 1) == '/' ||
-        substr($page, 0, 1) == '\\'){
-        $fileToOpen = substr($page, 1);
-    }
-    else{
-        $fileToOpen = $page;
-    }
-    return($fileToOpen);
-}
-
-
 
