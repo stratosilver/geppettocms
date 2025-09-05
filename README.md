@@ -10,7 +10,14 @@ PHP
 
 Upload `geppetto.php` and  `/geppetto` directory in the root directory of your static website.
 
+Add the attibute `editable="true"` on each element you want to be editable 
+
 go to `https://www.yourwebsite.com/geppetto.php`
+
+## Exemple
+'<p editable="true">bla bla</p>'
+
+
 
 ## Create an account
 
