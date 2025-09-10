@@ -1,7 +1,6 @@
-# Geppetto CMS (Proof of concept)
+# Geppetto CMS (Alpha)
 
-Geppetto CMS is a PHP file that enable online edition of defined parts of all static web pages of a website.
-(I changed the name, Alien CMS to Geppetto CMS, it's more accurate regarding of the functionalities)
+Geppetto CMS make any static website editable. It enables online edition of defined parts of all static web pages of a website.
 
 # Required
 
@@ -9,9 +8,27 @@ PHP
 
 # Usage
 
-Upload geppetto.php in the root directory of your static website.
+Upload `geppetto.php` and  `/geppetto` directory in the root directory of your static website.
 
-go to https://www.exemple.com/geppetto.php?page=pagename.html.
+Add the attibute `editable="true"` on each element you want to be editable 
 
-It will open the page pagename.html and any section of the HTML page between `<!--EDITABLE-->` and `<!--END EDITABLE-->` become a small form with a textarea and a save button
-When you edit the text and click on save, the page will be updated whit the change you made.
+go to `https://www.yourwebsite.com/geppetto.php`
+
+## Exemple
+```<p editable="true">bla bla</p>```
+
+
+
+## Create an account
+
+The first time it is used it asks you to create an account, fill in the login and password fields and click 'create'
+The login page will show.
+
+## Edit website
+
+After the login, it will search for the default page (index.html, index.html, or index.php) it will open the page in edition mode 
+
+If you have a specific default page indicate it as a parameter of the url `https://www.yourwebsite.com/geppetto.php?page=pagename.html`
+
+In the edition mode and any HTML element with the attribute __editable="true"__ will become editable. To change the text simply click on it and edit it 
+When you click on the save button which is floating on the bottom right of the page, the page will be updated with the change you made.
