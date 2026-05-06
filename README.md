@@ -32,3 +32,5 @@ If you have a specific default page indicate it as a parameter of the url `https
 
 In the edition mode and any HTML element with the attribute __editable="true"__ will become editable. To change the text simply click on it and edit it 
 When you click on the save button which is floating on the bottom right of the page, the page will be updated with the change you made.
+
+[Web page](https://stratosilver.github.io/geppettocms/)
